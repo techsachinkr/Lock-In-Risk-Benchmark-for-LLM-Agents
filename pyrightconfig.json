@@ -1,0 +1,21 @@
+{
+    "include": [
+        "evaluation",
+        "agents",
+        "benchmarks",
+        "analysis",
+        "sandbox",
+        "tests"
+    ],
+    "exclude": [
+        "**/node_modules",
+        "**/__pycache__",
+        ".venv"
+    ],
+    "pythonVersion": "3.11",
+    "pythonPlatform": "Windows",
+    "venvPath": ".venv",
+    "typeCheckingMode": "basic"
+}
+
+
