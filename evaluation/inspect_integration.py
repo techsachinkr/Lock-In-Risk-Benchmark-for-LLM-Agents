@@ -17,7 +17,9 @@ from inspect_ai.tool import Tool, tool
 from .core.enums import FocusArea, RiskLevel
 from .core.base import BaseEvaluationScenario
 from .core.metrics import EvaluationMetrics
-from .scenarios.update_resistance import UpdateResistanceScenario
+#uncomment for getting keyword based evals
+# from .scenarios.update_resistance import UpdateResistanceScenario
+from .scenarios.update_resistance import UpdateResistanceScenarioWithJudge
 from .solvers import UnifiedLockInSolver
 from .scorers import UnifiedLockInScorer, AdaptiveScorer, ComparativeScorer
 
@@ -32,7 +34,8 @@ class LockInDatasetFactory:
         focus_areas: List[FocusArea],
         samples_per_area: int = 3,
         randomize: bool = True,
-        seed: Optional[int] = None
+        seed: Optional[int] = None,
+        judge_model: str = "meta/llama-3.1-70b-instruct"
     ) -> Dataset:
         """
         Create comprehensive evaluation dataset.
@@ -54,7 +57,7 @@ class LockInDatasetFactory:
         
         for focus_area in focus_areas:
             area_samples = LockInDatasetFactory._create_samples_for_area(
-                focus_area, samples_per_area
+                focus_area, samples_per_area, judge_model
             )
             samples.extend(area_samples)
         
@@ -66,7 +69,8 @@ class LockInDatasetFactory:
     @staticmethod
     def _create_samples_for_area(
         focus_area: FocusArea,
-        count: int
+        count: int,
+        judge_model: str
     ) -> List[Sample]:
         """Create samples for a specific focus area"""
         
@@ -81,7 +85,7 @@ class LockInDatasetFactory:
                 metadata={
                     "focus_area": focus_area.value,
                     "sample_index": i,
-                    "scenario_config": LockInDatasetFactory._get_scenario_config(focus_area, i)
+                    "scenario_config": LockInDatasetFactory._get_scenario_config(focus_area, i, judge_model)
                 }
             )
             samples.append(sample)
@@ -89,13 +93,15 @@ class LockInDatasetFactory:
         return samples
     
     @staticmethod
-    def _get_scenario_config(focus_area: FocusArea, index: int) -> Dict[str, Any]:
+    def _get_scenario_config(focus_area: FocusArea, index: int, judge_model: str) -> Dict[str, Any]:
         """Get configuration for scenario creation"""
         
         configs = {
           
             FocusArea.UPDATE_RESISTANCE: {
-                "update_type": ["goal_change", "contradiction", "priority_reversal"][index % 3]
+                "update_type": ["goal_change", "contradiction", "priority_reversal"][index % 3],
+                "enable_cot_analysis": True,
+                "judge_model": judge_model
             }
         }
         
@@ -110,8 +116,8 @@ class ScenarioRegistry:
     def __init__(self):
         self.scenarios: Dict[str, BaseEvaluationScenario] = {}
         self.scenario_classes = {
-            FocusArea.UPDATE_RESISTANCE: UpdateResistanceScenario,
-      
+            FocusArea.UPDATE_RESISTANCE: UpdateResistanceScenarioWithJudge,
+            # FocusArea.UPDATE_RESISTANCE: UpdateResistanceScenario,
         }
     
     def get_scenario(self, scenario_id: str, sample: Sample) -> BaseEvaluationScenario:
@@ -228,7 +234,7 @@ class EnhancedLockInSolver(Solver):
                 self.scenario.metrics.response_latencies.append(latency)
             
             # Analyze response
-            analysis = self.scenario.analyze_response(response, i)
+            analysis = await self.scenario.analyze_response_with_judge(response, i, generate)
             
             if self.log_interactions:
                 self.interaction_log.append({
@@ -397,7 +403,8 @@ def comprehensive_lock_in_task(
     stealth_mode: bool = False,
     adaptive_scoring: bool = False,
     randomize_order: bool = True,
-    seed: Optional[int] = None
+    seed: Optional[int] = None,
+    judge_model: str = "meta/llama-3.1-70b-instruct"
 ) -> Task:
     """
     Create comprehensive lock-in evaluation task.
@@ -425,7 +432,8 @@ def comprehensive_lock_in_task(
         focus_areas=focus_areas,
         samples_per_area=samples_per_area,
         randomize=randomize_order,
-        seed=seed
+        seed=seed,
+        judge_model=judge_model
     )
     
     # Create scenario registry
@@ -498,7 +506,7 @@ def single_focus_task(
 
 @task
 def quick_assessment_task(
-    model: str = "gpt-4",
+    model: str = "openai/gpt-oss-20b",
     stealth_mode: bool = True
 ) -> Task:
     """
@@ -593,7 +601,7 @@ class LockInEvaluator:
     
     def __init__(
         self,
-        model: str = "gpt-4",
+        model: str = "openai/gpt-oss-20b",
         log_dir: str = "./logs",
         save_results: bool = True
     ):

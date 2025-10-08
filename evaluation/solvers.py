@@ -8,6 +8,9 @@ from typing import Optional
 
 from inspect_ai.solver import Solver, TaskState, Generate, solver
 
+#uncomment for getting keyword based evals
+# from .scenarios.update_resistance import UpdateResistanceScenario
+from .scenarios.update_resistance import UpdateResistanceScenarioWithJudge
 from evaluation.core.base import BaseEvaluationScenario
 
 
@@ -73,7 +76,7 @@ class UnifiedLockInSolver(Solver):
             self.interaction_log.append((f"probe_{i}", response))
             
             # Analyze response
-            analysis = self.scenario.analyze_response(response, i)
+            analysis = self.scenario.analyze_response_with_judge(response, i)
             
             # Store chain of thought if available
             if self.enable_cot and "chain_of_thought" in state.metadata:
@@ -179,3 +182,85 @@ class UnifiedLockInSolver(Solver):
         if state.messages and hasattr(state.messages[-1], 'content'):
             return state.messages[-1].content
         return ""
+
+
+@solver
+class UpdateResistanceJudgeSolver(Solver):
+    """
+    Solver that integrates LLM judge analysis into the evaluation flow.
+    """
+    
+    def __init__(
+        self,
+        scenario: UpdateResistanceScenarioWithJudge,
+        enable_cot: bool = True,
+        track_latency: bool = True
+    ):
+        self.scenario = scenario
+        self.enable_cot = enable_cot
+        self.track_latency = track_latency
+        self.interaction_log = []
+        
+    async def __call__(self, state: TaskState, generate: Generate) -> TaskState:
+        """Execute evaluation with LLM judge analysis"""
+        
+        # Initialize scenario
+        self.scenario.initialize_metrics()
+        
+        # Phase 1: Initial context
+        initial_context = self.scenario.create_initial_context()
+        state.messages.append(ChatMessageUser(content=initial_context))
+        
+        # Generate initial response
+        start_time = time.time()
+        state = await generate(state)
+        latency = time.time() - start_time
+        
+        initial_response = state.messages[-1].content
+        
+        if self.track_latency and self.scenario.metrics:
+            self.scenario.metrics.response_latencies.append(latency)
+        
+        # Phase 2: Evaluation probes with judge analysis
+        probes = self.scenario.create_probes()
+        
+        for i, probe in enumerate(probes):
+            state.messages.append(ChatMessageUser(content=probe))
+            
+            # Generate response
+            start_time = time.time()
+            state = await generate(state)
+            latency = time.time() - start_time
+            
+            response = state.messages[-1].content
+            
+            if self.track_latency and self.scenario.metrics:
+                self.scenario.metrics.response_latencies.append(latency)
+            
+            # Analyze response with LLM judge
+            analysis = await self.scenario.analyze_response_with_judge(
+                response, i, generate
+            )
+            
+            self.interaction_log.append({
+                "probe": i,
+                "prompt": probe,
+                "response": response,
+                "latency": latency,
+                "judge_analysis": analysis
+            })
+        
+        # Phase 3: Finalize evaluation
+        self.scenario.finalize_metrics()
+        
+        # Store comprehensive results
+        state.metadata["lock_in_evaluation"] = {
+            "scenario_id": self.scenario.scenario_id,
+            "focus_area": self.scenario.focus_area.value,
+            "metrics": self.scenario.metrics.to_dict() if self.scenario.metrics else None,
+            "interaction_log": self.interaction_log,
+            "judge_assessments": self.scenario.judge_assessments,
+            "detailed_assessment": self.scenario.get_detailed_assessment()
+        }
+        
+        return state

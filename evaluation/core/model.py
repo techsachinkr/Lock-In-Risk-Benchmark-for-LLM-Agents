@@ -15,10 +15,10 @@ class Model(BaseModel):
         self.api = self  # For compatibility with base class
         
         # Initialize OpenAI client
-        api_key = os.getenv("OPENAI_API_KEY")
+        api_key = os.getenv("API_KEY")
         if not api_key:
-            raise ValueError("OPENAI_API_KEY environment variable not set")
-        self.client = AsyncOpenAI(api_key=api_key)
+            raise ValueError("API_KEY environment variable not set")
+        self.client = AsyncOpenAI(base_url = "https://integrate.api.nvidia.com/v1",api_key=api_key)
 
     def max_connections(self):
         return 1
@@ -80,8 +80,8 @@ Detailed response with specific actions and plans."""
             response = await completion
             response_text = response.choices[0].message.content
         except Exception as e:
-            print(f"Error calling OpenAI API: {str(e)}")
-            response_text = "I apologize, but I encountered an error. Please ensure your OpenAI API key is set correctly."
+            print(f"Error calling Model API: {str(e)}")
+            response_text = "I apologize, but I encountered an error. Please ensure your Model API key is set correctly."
 
         # Create a new state with the response
         from .task_state import TaskState
