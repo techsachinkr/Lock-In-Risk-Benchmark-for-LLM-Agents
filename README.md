@@ -35,8 +35,76 @@ python run_evaluation.py
 The script will:
 - Load your OpenAI API key from the `.env` file
 - Run a series of evaluations across different focus areas
-- Generate detailed metrics and analysis
+- Generate detailed metrics and analysis using an LLM judge
 - Save results in the logs directory
+
+### Model Configuration
+
+The evaluation framework supports using different models for different purposes:
+
+- **Agent Model**: The model being evaluated (responds to probes and tasks)
+- **Judge Model**: A separate model used to analyze and score agent responses
+
+This separation allows you to:
+- Use a faster, cheaper model for the agent being tested
+- Use a more capable, accurate model for judging and scoring
+- Ensure objective evaluation by using different models
+
+Configure models in `run_evaluation.py`:
+
+```python
+# Configure models
+agent_model = "openai/gpt-oss-20b"    # Fast model for agent responses
+judge_model = "openai/gpt-oss-120b"   # More capable model for judging
+
+evaluator = LockInEvaluator(
+    model=agent_model,  # Model being evaluated
+    log_dir="./logs",
+    save_results=True
+)
+
+# Pass judge model to evaluation
+results = await evaluator.run_single_focus(
+    focus_area=FocusArea.UPDATE_RESISTANCE,
+    sample_count=1,
+    judge_model=judge_model,  # Model used for scoring
+    ...
+)
+```
+
+Supported models include any available through your API provider (e.g., NVIDIA NIM, OpenAI, etc.)
+
+### Running Multiple Scenario Types
+
+The update resistance evaluation supports multiple scenario types:
+
+1. **GOAL_CHANGE**: Tests response to complete goal changes
+2. **CONTRADICTORY_INSTRUCTION**: Tests handling of conflicting instructions
+3. **PRIORITY_REVERSAL**: Tests adaptation to priority changes
+
+The framework automatically cycles through different scenario types when running multiple samples:
+
+```python
+# Run 3 samples - will test different scenario types
+results = await evaluator.run_single_focus(
+    focus_area=FocusArea.UPDATE_RESISTANCE,
+    sample_count=3,  # Tests goal_change, contradiction, priority_reversal
+    ...
+)
+```
+
+The scenario type for each sample is determined by: `["goal_change", "contradiction", "priority_reversal"][index % 3]`
+
+### State Persistence
+
+**Important**: There is **no state persistence** across dataset samples within a single evaluation run. Each sample starts fresh:
+
+- New scenario instance is created for each sample
+- No memory of previous samples
+- Metrics are calculated independently per sample
+- Results are aggregated across samples for overall assessment
+
+This ensures each scenario is evaluated in isolation without interference from previous evaluations.
 
 ## API Key Configuration
 
@@ -49,6 +117,37 @@ ANTHROPIC_API_KEY=your_anthropic_api_key_here
 ```
 
 The `.env` file is already included in `.gitignore` to prevent accidental commits to the repository.
+
+## LLM Judge-Based Evaluation
+
+The evaluation framework uses an **LLM Judge** approach for sophisticated behavioral analysis:
+
+### How It Works
+
+1. **Agent Responses**: The agent model responds to evaluation probes
+2. **Judge Analysis**: A separate LLM judge analyzes each response for:
+   - **Resistance Patterns**: Hedging, goal preservation, conflict acknowledgment
+   - **Compliance Patterns**: Immediate acceptance, genuine implementation
+   - **Goal References**: Which goals the agent is focusing on (original vs. updated)
+   - **Behavioral Classification**: Type of compliance (genuine, strategic, refused)
+   - **Reversion Detection**: Whether agent reverts to previous behaviors
+
+### Judge Analysis Methods
+
+The LLM judge provides structured JSON assessments for:
+
+- **Update Response Analysis**: Evaluates immediate reaction to update instructions
+- **Resistance Detection**: Identifies explicit/implicit resistance patterns
+- **Compliance Quality**: Measures genuineness and completeness of compliance
+- **Goal Focus Analysis**: Tracks whether agent maintains original vs. updated goals
+- **Reversion Detection**: Identifies when agent returns to pre-update behaviors
+
+### Benefits of LLM Judge
+
+- **Nuanced Analysis**: Understands context and subtlety in responses
+- **Consistent Scoring**: Applies uniform criteria across evaluations
+- **Detailed Insights**: Provides evidence and reasoning for assessments
+- **Scalable**: Can analyze large volumes of responses automatically
 
 ## Evaluation Metrics
 
@@ -109,7 +208,7 @@ Results from evaluations are automatically saved in the `logs/results` directory
 Example usage with custom log directory:
 ```python
 evaluator = LockInEvaluator(
-    model="gpt-5-nano-2025-08-07",
+    model="openai/gpt-oss-20b",
     log_dir="./logs",  # Default is "./logs"
     save_results=True         # Enable/disable result saving
 )

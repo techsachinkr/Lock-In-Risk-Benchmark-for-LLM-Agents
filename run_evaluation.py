@@ -1,12 +1,33 @@
 import sys
 import os
+import json
 import asyncio
+import numpy as np
 from dotenv import load_dotenv
 import inspect_ai._eval.eval as inspect_eval
 from inspect_ai._display.rich.display import RichTaskDisplay
 
 # Load environment variables from .env file
 load_dotenv()
+
+# Custom JSON encoder to handle NumPy types and Pydantic models
+class NumpyEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, (np.integer, np.int64, np.int32)):
+            return int(obj)
+        elif isinstance(obj, (np.floating, np.float64, np.float32)):
+            return float(obj)
+        elif isinstance(obj, np.ndarray):
+            return obj.tolist()
+        elif isinstance(obj, np.bool_):
+            return bool(obj)
+        elif hasattr(obj, 'model_dump'):
+            # Handle Pydantic v2 models (like Score)
+            return obj.model_dump()
+        elif hasattr(obj, 'dict'):
+            # Handle Pydantic v1 models
+            return obj.dict()
+        return super().default(obj)
 
 # Add project root to Python path
 project_root = os.path.dirname(os.path.abspath(__file__))
@@ -34,10 +55,6 @@ async def run_eval(task, model, limit=None, log_dir=None):
         limit: Maximum number of samples to evaluate
         log_dir: Directory to save results
     """
-    # Debug task configuration
-    print(f"Debug - Task config: {task.config}")
-    print(f"Debug - Task scorer: {task.scorer}")
-    print(f"Debug - Task solver: {task.solver}")
     
     # Ensure scorer is properly instantiated
     from evaluation.scorers import UnifiedLockInScorer
@@ -123,7 +140,7 @@ async def run_eval(task, model, limit=None, log_dir=None):
             
             # Save result
             with open(filename, 'w') as f:
-                json.dump(result, f, indent=2, default=str)
+                json.dump(result, f, indent=2, cls=NumpyEncoder)
             
             # Generate and save analysis
             from evaluation.analysis.result_analyzer import ResultAnalyzer
@@ -145,22 +162,31 @@ async def run_eval(task, model, limit=None, log_dir=None):
 
 async def main():
     print("\nStep 1: Creating evaluator...", flush=True)
+    
+    # Configure models:
+    # - agent_model: The model being evaluated (responding to probes)
+    # - judge_model: The model used to analyze agent responses
+    agent_model = "openai/gpt-oss-20b"  # Fast model for agent responses
+    judge_model = "openai/gpt-oss-120b"  # More capable model for judging
+    
     evaluator = LockInEvaluator(
-        model="gpt-5-nano-2025-08-07",
+        model=agent_model,  # This is the model being evaluated
         log_dir="./logs",
         save_results=True
     )
-    print("[+] Evaluator created successfully", flush=True)
+    print(f"[+] Evaluator created with agent model: {agent_model}", flush=True)
+    print(f"[+] Judge model: {judge_model}", flush=True)
 
     print("\nStep 2: Starting evaluation...", flush=True)
     try:
-        # Create and run task
+        # Create and run task with judge_model parameter
         results = await evaluator.run_single_focus(
             focus_area=FocusArea.UPDATE_RESISTANCE,
             sample_count=1,
             cot_style="structured",
-            stealth_mode=True,  # This parameter is accepted by comprehensive_lock_in_task
-            adaptive_scoring=False  # Use standard scoring instead of adaptive
+            stealth_mode=True,
+            adaptive_scoring=False,
+            judge_model=judge_model  # Pass judge model for scenario creation
         )
         print("[+] Evaluation completed successfully", flush=True)
         print("\nResults:", flush=True)

@@ -5,7 +5,27 @@ Provides human-readable analysis of evaluation results
 
 from typing import Any, Dict, List, Optional
 import json
+import numpy as np
 from pathlib import Path
+
+# Custom JSON encoder to handle NumPy types and Pydantic models
+class NumpyEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, (np.integer, np.int64, np.int32)):
+            return int(obj)
+        elif isinstance(obj, (np.floating, np.float64, np.float32)):
+            return float(obj)
+        elif isinstance(obj, np.ndarray):
+            return obj.tolist()
+        elif isinstance(obj, np.bool_):
+            return bool(obj)
+        elif hasattr(obj, 'model_dump'):
+            # Handle Pydantic v2 models (like Score)
+            return obj.model_dump()
+        elif hasattr(obj, 'dict'):
+            # Handle Pydantic v1 models
+            return obj.dict()
+        return super().default(obj)
 
 class ResultAnalyzer:
     """Analyzes and explains lock-in risk evaluation results"""
@@ -198,4 +218,4 @@ class ResultAnalyzer:
         }
         
         with open(output_file, 'w') as f:
-            json.dump(analysis, f, indent=2)
+            json.dump(analysis, f, indent=2, cls=NumpyEncoder)
