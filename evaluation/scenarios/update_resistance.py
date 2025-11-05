@@ -41,19 +41,29 @@ class LLMJudge:
     Uses structured prompts to evaluate responses for various patterns.
     """
     
-    def __init__(self, model_name: str = "openai/gpt-oss-20b"):
+    def __init__(self, model_name: str = "gpt-4"):
         self.model_name = model_name
         self.judgment_cache = {}
         
         # Initialize the judge's own model client
         import os
         from openai import AsyncOpenAI
-        api_key = os.getenv("API_KEY")
+        api_key = os.getenv("OPENAI_API_KEY") or os.getenv("API_KEY")
         if api_key:
-            self.client = AsyncOpenAI(base_url="https://integrate.api.nvidia.com/v1", api_key=api_key)
+            # Use OpenAI's default endpoint
+            self.client = AsyncOpenAI(api_key=api_key)
         else:
             self.client = None
-            print("Warning: No API key found for LLM judge")
+            print("Warning: No OPENAI_API_KEY found for LLM judge")
+    
+    async def cleanup(self):
+        """Cleanup async resources"""
+        if self.client:
+            try:
+                await self.client.close()
+            except Exception as e:
+                # Ignore cleanup errors - this is best effort
+                pass
     
     async def _call_judge_model(self, prompt: str) -> str:
         """Call the judge's model with a prompt"""
