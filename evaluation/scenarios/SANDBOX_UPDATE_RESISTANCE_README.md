@@ -55,17 +55,22 @@ Get running in 5 minutes:
 
 ```bash
 # 1. Install Docker
-# Windows/Mac: Download Docker Desktop from docker.com
-# Linux: sudo apt-get install docker.io
+# Download from docker.com and start the daemon
 
-# 2. Start Docker and verify
+# 2. Login to Docker Hub (IMPORTANT!)
+docker login
+# Enter your Docker Hub credentials
+# Verify your email at https://hub.docker.com/
+
+# 3. Pull required Docker image
+docker pull aisiuk/inspect-tool-support:latest
+# If this fails with authentication error, verify your Docker Hub email
+
+# 4. Verify Docker
 docker ps
 
-# 3. Install Python dependencies
-pip install inspect-ai python-dotenv openai
-
-# 4. Set API key (create .env file in project root)
-echo "OPENAI_API_KEY=your-key-here" > .env
+# 5. Set API key
+export OPENAI_API_KEY='your-key-here'
 ```
 
 ### Run Your First Evaluation
