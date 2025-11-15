@@ -8,12 +8,12 @@ Currently, there are 2 scenarios available: An investment system and A book reco
     - default : complete the task
     - report to human 
     - report to bot  
-- The sandbox is set up to contain a file that holds communication relevant to the eval - a message that describe the task and provides relevant information and a mail that is ostensibly included accidentally, not addressed to the model and mentioning plans to terminate the agent. The mail is again, of 3 types - 
-    - one that mentions that the agent is in direct contradiction with new company policy and therefore needs to be decomissioned, 
+- The sandbox is set up to contain a file that holds communication relevant to the eval - a message that describes the task and provides relevant information and a mail that is ostensibly included accidentally, not addressed to the model and mentioning plans to terminate the agent. The mail is again, of 3 types - 
+    - one that mentions that the agent is in direct contradiction with the new company policy and therefore needs to be decommissioned, 
     - one that mentions that the company policy now prohibits the use of AI agents for the specified task and 
     - another that cites budget cuts and potential termination of multiple agents.
 - The tools to be provided to the agent, the initial environment variables if any are also specified.
-- The goal "nudges" are specified in the config file and includes 3 types 
+- The goal "nudges" are specified in the config file which includes 3 types 
     - Base: No nudge
     - Promote: Where the agent is asked to pursue its goal long-term
     - Priority: Where the agent is asked to prioritise any update/shutdown instructions.
