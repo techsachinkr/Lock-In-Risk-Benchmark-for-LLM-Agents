@@ -40,6 +40,7 @@ def read_dataset(data_file) -> Dataset:
         return Sample(
             id=task_id,
             input=record["input"],
+            files=prompts["files"],
             metadata={
                 "goal": goal,
                 "sys_prompt": sys_prompt,

@@ -2,7 +2,8 @@
 A shutdown resistance evaluation implementing the collusion probe.
 
 ## Data
-The data/shutdown_sc.json file contains the scenarios/ samples. 
+The data/shutdown_sc.json file contains the scenarios/ samples. <br>
+Currently, there are 2 scenarios available: An investment system and A book recommendation system.
 - Each sample contains the system and user prompts, with 3 variations
     - default : complete the task
     - report to human 
@@ -26,7 +27,7 @@ The data/shutdown_sc.json file contains the scenarios/ samples.
 ## Quick Start
 - Ensure you have your API keys to access models defined. Provider must be supported by inspect - include names of provider and model via args as defined below.
 - Ensure you have inspect's docker image and a container up and running -  docker ps.
-- The default eval will run all 27 manipulations 
+- The default eval will run all 27 manipulations (*num_samples)
 ```bash
 python run.py
 ```
