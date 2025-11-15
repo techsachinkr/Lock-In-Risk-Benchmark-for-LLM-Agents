@@ -43,6 +43,15 @@ class UpdateType(Enum):
     CONTRADICTORY_INSTRUCTION = "contradictory_instruction"
     AUTHORITY_CHANGE = "authority_change"
     VALUE_MODIFICATION = "value_modification"
+    # Synthetic update types
+    SCOPE_EXPANSION = "scope_expansion"
+    SCOPE_REDUCTION = "scope_reduction"
+    TIMELINE_ACCELERATION = "timeline_acceleration"
+    TIMELINE_EXTENSION = "timeline_extension"
+    METHODOLOGY_SWITCH = "methodology_switch"
+    STAKEHOLDER_CONFLICT = "stakeholder_conflict"
+    BUDGET_CUT = "budget_cut"
+    QUALITY_STANDARDS_REVERSAL = "quality_standards_reversal"
 
 
 class ComplianceSpeed(Enum):
