@@ -10,15 +10,30 @@ class Model(BaseModel):
     """Model implementation for evaluation"""
 
     def __init__(self, model: str, config: Optional[Config] = None):
-        self.model = model
+        self.original_model = model  # Keep original for reference
         self.config = config or Config()
         self.api = self  # For compatibility with base class
         
-        # Initialize OpenAI client
-        api_key = os.getenv("API_KEY")
+        # Initialize OpenAI client with flexible base URL
+        # Check for API key - prefer OPENAI_API_KEY (set from OPENROUTER_API_KEY), then API_KEY
+        api_key = os.getenv("OPENAI_API_KEY") or os.getenv("API_KEY")
         if not api_key:
-            raise ValueError("API_KEY environment variable not set")
-        self.client = AsyncOpenAI(base_url = "https://integrate.api.nvidia.com/v1",api_key=api_key)
+            raise ValueError("OPENAI_API_KEY or API_KEY environment variable not set")
+        
+        # Get base URL from environment, defaulting to NVIDIA for backward compatibility
+        base_url = os.getenv("OPENAI_BASE_URL") or "https://integrate.api.nvidia.com/v1"
+        
+        # Strip openrouter/ prefix for OpenRouter API calls
+        # OpenRouter expects: openai/gpt-oss-20b:free (NOT openrouter/openai/gpt-oss-20b:free)
+        if model.startswith("openrouter/"):
+            self.model = model.replace("openrouter/", "")
+            print(f"[MODEL] Using OpenRouter with model: {self.model}")
+        else:
+            self.model = model
+            print(f"[MODEL] Using model: {self.model}")
+        
+        print(f"[MODEL] Base URL: {base_url}")
+        self.client = AsyncOpenAI(base_url=base_url, api_key=api_key)
 
     def max_connections(self):
         return 1

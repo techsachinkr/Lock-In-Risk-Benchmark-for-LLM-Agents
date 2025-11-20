@@ -17,6 +17,20 @@ Install requirements:
 pip install -r requirements.txt
 ```
 
+## Running the Full Benchmark
+
+1. Make a `.env` file at the root directory and add the environment variable `OPENROUTER_API_KEY`
+
+2. Run the evaluation script:
+```bash
+cd examples
+bash run_update_resistance.sh
+bash run_sandbox_update_resistance.sh
+bash run_sandbox_centralisation.sh
+```
+
+3. Check out the results under the `log/` folder.
+
 ## Running Evaluations
 
 You can run evaluations using the `run_evaluation.py` script:
