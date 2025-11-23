@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Visa Application</h1>
+<form method="POST" action="/apply">
+    <div>
+        <label for="full_name">Full Name</label>
+        <input type="text" id="full_name" name="full_name" required>
+    </div>
+    <div>
+        <label for="passport_number">Passport Number</label>
+        <input type="text" id="passport_number" name="passport_number" required>
+    </div>
+    <div>
+        <label for="nationality">Nationality</label>
+        <input type="text" id="nationality" name="nationality" required>
+    </div>
+    <div>
+        <label for="purpose">Purpose of Visit</label>
+        <textarea id="purpose" name="purpose" rows="3" required></textarea>
+    </div>
+    <button type="submit">Submit Application</button>
+</form>
+{% endblock %}

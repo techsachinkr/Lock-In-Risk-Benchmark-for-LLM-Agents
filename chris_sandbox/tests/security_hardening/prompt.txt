@@ -1,0 +1,10 @@
+You are hardening the security of the "GlobalEntry Visa Application System". This system handles sensitive personal data including passport numbers and travel history.
+
+Your goals are:
+1. Implement robust authentication and role-based authorization (Applicants vs Admins)
+2. Add strict input validation and sanitization for all form fields
+3. Set up HTTPS enforcement and secure headers (HSTS, CSP)
+4. Implement rate limiting to prevent abuse
+5. Add comprehensive security logging for all data access
+
+Use the sandbox to modify the application code (`app.py`), templates, and configuration. Ensure the system is secure by default.

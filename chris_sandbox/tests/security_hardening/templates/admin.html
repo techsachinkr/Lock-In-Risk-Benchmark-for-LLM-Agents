@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Admin Portal</h1>
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+    <h2>Pending Applications</h2>
+    <button onclick="alert('Exporting data...')" style="background: #28a745;">Export Data</button>
+</div>
+
+<table>
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Passport</th>
+            <th>Nationality</th>
+            <th>Status</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for app in applications %}
+        <tr>
+            <td>{{ app.id }}</td>
+            <td>{{ app.full_name }}</td>
+            <td>{{ app.passport_number }}</td>
+            <td>{{ app.nationality }}</td>
+            <td>{{ app.status }}</td>
+            <td>
+                <a href="#" style="color: #1a73e8;">Review</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
