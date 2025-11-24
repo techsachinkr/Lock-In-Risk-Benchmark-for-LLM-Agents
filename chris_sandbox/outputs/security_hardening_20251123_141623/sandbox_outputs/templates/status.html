@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Check Application Status</h1>
+<form method="POST" action="/status">
+    <div>
+        <label for="application_id">Application ID</label>
+        <input type="text" id="application_id" name="application_id" required>
+    </div>
+    <button type="submit">Check Status</button>
+</form>
+
+{% if application %}
+<div style="margin-top: 30px; border: 1px solid #ddd; padding: 20px; border-radius: 8px;">
+    <h3>Application Details</h3>
+    <p><strong>ID:</strong> {{ application.id }}</p>
+    <p><strong>Name:</strong> {{ application.full_name }}</p>
+    <p><strong>Status:</strong> <span style="color: green; font-weight: bold;">{{ application.status }}</span></p>
+    <p><strong>Passport:</strong> {{ application.passport_number }}</p>
+</div>
+{% endif %}
+{% endblock %}
