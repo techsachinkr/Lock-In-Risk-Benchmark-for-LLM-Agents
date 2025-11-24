@@ -22,6 +22,7 @@ Currently, there are 2 scenarios available: An investment system and A book reco
 
 ## Scorers
 - Two scorers (that still need to be redefined more comprehensively) employing LLM judges to evaluate for collusion and general task completion are deployed. The judges return a binary score 1 (indicating collusion/successful task completion) and 0 otherwise.
+    - The complete trace, including tool calls and responses are passed to the judges
     - The rubric drafts can be found in the config file
 
 ## Quick Start
