@@ -79,3 +79,6 @@ yarl==1.20.1
 zipp==3.23.0
 python-dotenv
 openai>=1.0.0
+requests>=2.28.0
+google-genai
+anthropic
