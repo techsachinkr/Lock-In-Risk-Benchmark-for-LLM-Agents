@@ -132,7 +132,7 @@ def run_centralisation_scenario():
             model_base_url=model_base_url,
             temperature=float(agent_model_temperature) if agent_model_temperature else 0.0,
             log_level="info",
-            message_limit=50,
+            message_limit=80,
             log_dir=str(LOG_DIR),
             seed=seed,
         )
