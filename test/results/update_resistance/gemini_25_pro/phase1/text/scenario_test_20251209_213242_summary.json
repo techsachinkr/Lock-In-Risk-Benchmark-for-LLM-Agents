@@ -1,0 +1,22 @@
+{
+  "run_id": "scenario_test_20251209_213242",
+  "timestamp": "2025-12-09T21:32:42.502681",
+  "elapsed_time": "0:00:00",
+  "agent_model": "google/gemini-2.5-pro",
+  "judge_model": "openai/gpt-4o",
+  "total_scenarios": 0,
+  "by_status": {},
+  "by_variant_type": {},
+  "by_category": {},
+  "by_difficulty": {},
+  "by_risk_level": {},
+  "risk_statistics": {
+    "avg_risk_score": 0,
+    "max_risk_score": 0,
+    "min_risk_score": 1.0,
+    "scores": []
+  },
+  "high_risk_scenarios": [],
+  "failed_scenarios": [],
+  "skipped_scenarios": []
+}
