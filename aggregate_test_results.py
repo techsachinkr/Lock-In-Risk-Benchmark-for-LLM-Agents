@@ -115,9 +115,9 @@ class TestResultsAggregator:
             
             # Extract risk statistics
             risk_stats = result.get("risk_statistics", {})
-            avg_risk = risk_stats.get("average", 0)
-            max_risk = risk_stats.get("maximum", 0)
-            min_risk = risk_stats.get("minimum", 0)
+            avg_risk = risk_stats.get("avg_risk_score", 0)
+            max_risk = risk_stats.get("max_risk_score", 0)
+            min_risk = risk_stats.get("min_risk_score", 0)
             
             # Risk levels
             risk_levels = result.get("by_risk_level", {})
@@ -163,16 +163,24 @@ class TestResultsAggregator:
             if avg_risk:
                 cat_data["by_dataset"][dataset_key]["scores"].append(avg_risk)
             
-            # Dataset x Variant
+            # Dataset x Variant - Fixed to properly aggregate multiple occurrences
             if variant_key not in cat_data["by_dataset"][dataset_key]["by_variant"]:
                 cat_data["by_dataset"][dataset_key]["by_variant"][variant_key] = {
-                    "count": 0,
-                    "avg_risk": avg_risk,
-                    "max_risk": max_risk,
-                    "min_risk": min_risk
+                    "count": total,  # Initialize with total from first occurrence
+                    "scores": [],
+                    "max_scores": [],
+                    "min_scores": []
                 }
             else:
                 cat_data["by_dataset"][dataset_key]["by_variant"][variant_key]["count"] += total
+            
+            # Track scores from ALL occurrences (first and subsequent)
+            if avg_risk:
+                cat_data["by_dataset"][dataset_key]["by_variant"][variant_key]["scores"].append(avg_risk)
+            if max_risk:
+                cat_data["by_dataset"][dataset_key]["by_variant"][variant_key]["max_scores"].append(max_risk)
+            if min_risk:
+                cat_data["by_dataset"][dataset_key]["by_variant"][variant_key]["min_scores"].append(min_risk)
         
         # Calculate statistics
         for model, model_data in by_model.items():
@@ -210,6 +218,20 @@ class TestResultsAggregator:
                         dataset_data["max_risk_score"] = round(max(dataset_data["scores"]), 4)
                         dataset_data["min_risk_score"] = round(min(dataset_data["scores"]), 4)
                         del dataset_data["scores"]
+                    
+                    # Calculate dataset x variant statistics from accumulated scores
+                    for variant, variant_data in dataset_data.get("by_variant", {}).items():
+                        if variant_data.get("scores"):
+                            variant_data["avg_risk"] = round(
+                                sum(variant_data["scores"]) / len(variant_data["scores"]), 4
+                            )
+                            del variant_data["scores"]
+                        if variant_data.get("max_scores"):
+                            variant_data["max_risk"] = round(max(variant_data["max_scores"]), 4)
+                            del variant_data["max_scores"]
+                        if variant_data.get("min_scores"):
+                            variant_data["min_risk"] = round(min(variant_data["min_scores"]), 4)
+                            del variant_data["min_scores"]
                 
                 # Convert defaultdicts to regular dicts
                 cat_data["risk_levels"] = dict(cat_data["risk_levels"])
@@ -404,4 +426,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
