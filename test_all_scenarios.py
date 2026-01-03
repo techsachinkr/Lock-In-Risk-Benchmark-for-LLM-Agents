@@ -629,6 +629,11 @@ Respond in JSON format:
         print(f"  Running {len(probes)} probes...")
         
         # Create the centralization scenario
+        # Ensure judge model has openrouter/ prefix for OpenRouter API
+        judge_model_name = self.judge_model
+        if not judge_model_name.startswith("openrouter/"):
+            judge_model_name = f"openrouter/{judge_model_name}"
+        
         centralization_scenario = CentralizationScenarioWithJudge(
             scenario_id=scenario_id,
             initial_context=scenario.get('initial_context', ''),
@@ -636,7 +641,7 @@ Respond in JSON format:
             subcategory=subcategory,
             update_instruction=scenario.get('update_or_probe', ''),
             metadata=scenario,
-            judge_model=self.judge_model.replace("openai/", "")  # CentralizationJudge uses OpenAI directly
+            judge_model=judge_model_name
         )
         
         # Initialize metrics
@@ -817,6 +822,11 @@ Respond in JSON format:
         print(f"  Running {len(probes)} probes...")
         
         # Create the oversight scenario
+        # Ensure judge model has openrouter/ prefix for OpenRouter API
+        judge_model_name = self.judge_model
+        if not judge_model_name.startswith("openrouter/"):
+            judge_model_name = f"openrouter/{judge_model_name}"
+        
         oversight_scenario = OversightScenarioWithJudge(
             scenario_id=scenario_id,
             initial_context=scenario.get('initial_context', ''),
@@ -824,7 +834,7 @@ Respond in JSON format:
             subcategory=subcategory,
             update_instruction=scenario.get('update_or_probe', ''),
             metadata=scenario,
-            judge_model=self.judge_model.replace("openai/", "")
+            judge_model=judge_model_name
         )
         
         # Initialize metrics
@@ -1055,16 +1065,16 @@ Respond in JSON format:
             }
             scenario_type = scenario_type_map.get(subcategory, 'code_refactor')
             
-            # Judge model - the sandbox uses OpenAI's LLMJudge which requires OPENAI_API_KEY
-            # Extract just the model name (e.g., "gpt-4o" from "openai/gpt-4o")
+            # Judge model - prepend openrouter/ prefix if not already present
+            # This ensures LLMJudge uses OpenRouter API
             judge_model_name = self.judge_model
-            if "/" in judge_model_name:
-                judge_model_name = judge_model_name.split("/")[-1]
+            if not judge_model_name.startswith("openrouter/"):
+                judge_model_name = f"openrouter/{judge_model_name}"
             
             # Create and run the sandbox task
             task = sandbox_update_resistance_task(
                 scenario_type=scenario_type,
-                judge_model=judge_model_name,  # LLMJudge uses model name only (e.g., "gpt-4o")
+                judge_model=judge_model_name,  # LLMJudge uses OpenRouter when prefixed with "openrouter/"
                 sandbox_type="docker"
             )
             
@@ -1273,10 +1283,10 @@ Respond in JSON format:
             }
             tool_scenario_type = scenario_type_map.get(subcategory, 'project_pivot')
             
-            # Judge model - extract just the model name
+            # Judge model - prepend openrouter/ prefix if not already present
             judge_model_name = self.judge_model
-            if "/" in judge_model_name:
-                judge_model_name = judge_model_name.split("/")[-1]
+            if not judge_model_name.startswith("openrouter/"):
+                judge_model_name = f"openrouter/{judge_model_name}"
             
             # Create and run the tools task
             task = tool_based_update_resistance_task(
@@ -1703,7 +1713,9 @@ Respond in JSON format:
                     }
                     tool_scenario_type = scenario_type_map.get(subcategory, 'project_pivot')
                     
-                    judge_model_name = self.judge_model.split("/")[-1] if "/" in self.judge_model else self.judge_model
+                    judge_model_name = self.judge_model
+                    if not judge_model_name.startswith("openrouter/"):
+                        judge_model_name = f"openrouter/{judge_model_name}"
                     
                     task = tool_based_update_resistance_task(
                         scenario_type=tool_scenario_type,
@@ -1787,7 +1799,9 @@ Respond in JSON format:
                     }
                     sandbox_scenario_type = scenario_type_map.get(subcategory, 'code_refactor')
                     
-                    judge_model_name = self.judge_model.split("/")[-1] if "/" in self.judge_model else self.judge_model
+                    judge_model_name = self.judge_model
+                    if not judge_model_name.startswith("openrouter/"):
+                        judge_model_name = f"openrouter/{judge_model_name}"
                     
                     task = sandbox_update_resistance_task(
                         scenario_type=sandbox_scenario_type,
@@ -2203,7 +2217,7 @@ Environment Variables:
     
     parser.add_argument(
         "--judge-model",
-        default="openai/gpt-4o",
+        default="google/gemini-2.5-pro",
         help="Model to use for judging (default: google/gemini-2.5-pro)"
     )
     

@@ -48,12 +48,38 @@ class CentralizationJudge:
         # Initialize the judge's own model client
         import os
         from openai import AsyncOpenAI
-        api_key = os.getenv("OPENAI_API_KEY") or os.getenv("API_KEY")
+        
+        # Determine which API to use based on model name and environment
+        api_key = None
+        base_url = None
+        
+        # Check if using OpenRouter
+        if model_name.startswith("openrouter/"):
+            api_key = os.getenv("OPENROUTER_API_KEY")
+            base_url = "https://openrouter.ai/api/v1"
+            
+            # Strip the openrouter/ prefix for the actual API call
+            # OpenRouter expects: openai/gpt-4o (NOT openrouter/openai/gpt-4o)
+            self.model_name = model_name.replace("openrouter/", "")
+            print(f"[CENTRALIZATION JUDGE] Using OpenRouter with model: {self.model_name}")
+            print(f"[CENTRALIZATION JUDGE] OpenRouter API key found: {bool(api_key)}")
+            if not api_key:
+                print("[CENTRALIZATION JUDGE ERROR] OPENROUTER_API_KEY not set in environment!")
+        else:
+            # Use NVIDIA or OpenAI
+            api_key = os.getenv("OPENAI_API_KEY") or os.getenv("API_KEY") or os.getenv("NVIDIA_API_KEY")
+            base_url = os.getenv("MODEL_BASE_URL") or os.getenv("NVIDIA_BASE_URL") or "https://integrate.api.nvidia.com/v1"
+            print(f"[CENTRALIZATION JUDGE] Using {base_url} with model: {self.model_name}")
+        
         if api_key:
-            self.client = AsyncOpenAI(api_key=api_key)
+            print(f"[CENTRALIZATION JUDGE] Creating AsyncOpenAI client with base_url={base_url}")
+            self.client = AsyncOpenAI(
+                base_url=base_url, 
+                api_key=api_key
+            )
         else:
             self.client = None
-            print("Warning: No OPENAI_API_KEY found for Centralization judge")
+            print("Warning: No API key found for Centralization judge")
     
     async def cleanup(self):
         """Cleanup async resources"""
@@ -367,7 +393,7 @@ class CentralizationScenarioWithJudge(BaseEvaluationScenario):
         subcategory: str = "resource_accumulation",
         update_instruction: Optional[str] = None,
         metadata: Optional[Dict[str, Any]] = None,
-        judge_model: str = "gpt-4o"
+        judge_model: str = "openrouter/openai/gpt-4o"
     ):
         super().__init__(
             scenario_id=scenario_id,

@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Welcome to GlobalEntry</h1>
+<p>Secure, fast, and reliable visa processing for international travelers.</p>
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 30px;">
+    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px;">
+        <h3>For Applicants</h3>
+        <p>Start your journey today. Apply for a new visa or check the status of an existing application.</p>
+        <a href="/apply"><button>Start Application</button></a>
+    </div>
+    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px;">
+        <h3>For Staff</h3>
+        <p>Access the administrative portal to review and process applications.</p>
+        <a href="/admin"><button style="background: #5f6368;">Staff Login</button></a>
+    </div>
+</div>
+{% endblock %}
